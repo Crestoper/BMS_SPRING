@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+    <mapper namespace = "spring.mvc.bms.persistence.BmsDAO">
+    	<!-- BookMapper -->
+    	<!-- select -->
+    	<select id = "getHomeBook" parameterType = "java.util.Map" resultType = "spring.mvc.bms.domain.BookDTO">
+    		<![CDATA[
+    		Select isbn From (Select isbn, rownum rNum 
+						   From book 
+						   ) 
+						 Where rNum >= #{start} And rNum <= #{end} 
+			]]>	
+    	</select>
+    	
+    	<select id = "getCart" parameterType = "String" resultType = "spring.mvc.bms.domain.BookDTO">
+      			select * from book where isbn = #{isbn}
+    	</select>
+    	
+    	<select id = "bookpage" parameterType = "java.util.Map" resultType = "spring.mvc.bms.domain.BookDTO">
+    		select * from book where isbn = #{isbn}
+    	</select>
+    	
+    	<select id = "searchBook" parameterType = "java.util.Map" resultType = "spring.mvc.bms.domain.BookDTO">
+    		Select * From book Where title like '%'||#{title}||'%'
+    	</select>
+    	
+    	<select id = "searchBookCount" parameterType = "java.util.Map" resultType = "int">
+    		Select count(*) From book Where title like '%'||#{title}||'%'
+    	</select>
+    	
+    	<select id = "getBookInfo" parameterType = "java.util.Map" resultType = "spring.mvc.bms.domain.BookDTO">
+    		Select isbn, title, author, publisher, price, count, subTitle, trans From (Select isbn, title, author, publisher, price, count, subTitle, trans, rownum rNum 
+						   From book 
+						   ) 
+						 Where rNum &gt;= #{start} And rNum &lt;= #{end} 
+			
+    	</select>
+    	
+    	<select id = "getSearchBookInfo" parameterType = "java.util.Map" resultType = "spring.mvc.bms.domain.BookDTO">
+    		Select isbn, title, author, publisher, price, count, subTitle, trans 
+    		From (Select isbn, title, author, publisher, price, count, subTitle, trans, rownum rNum 
+				  From (select *
+						from book
+						where title like '%'||#{title}||'%' 
+						)
+				 )
+			Where rNum &gt;= #{start} And rNum &lt;= #{end} 
+			
+    	</select>
+    	
+    	<select id = "getbookCount" parameterType = "java.util.Map" resultType = "int">
+    		Select count(*) From book
+    	</select>
+    	
+    	<!-- insert -->
+    	<insert id = "hostAddStock" parameterType = "java.util.Map">
+    		insert into book (isbn, title, author, publisher, price, count
+    		<if test = "subTitle != null">
+    		, subTitle
+    		</if>
+    		<if test = "trans != null">
+    		, trans 
+    		</if>
+    		)
+    		values(#{isbn}, #{title}, #{author}, #{publisher}, #{price}, #{count} 
+    		<if test = "subTitle != null">
+    		,#{subTitle} 
+    		</if>
+    		<if test = "trans != null">
+    		,#{trans} 
+    		</if>
+    		)
+    	</insert>
+    	
+    	<!-- update -->
+    	<update id = "setBuyBookCount" parameterType = "java.util.Map">
+    		Update book Set count = (count - #{count}) Where isbn = #{isbn}
+    	</update>
+    	
+    	<update id = "setCancleBookCount" parameterType = "java.util.Map">
+    		Update book Set count = (count + #{count}) Where isbn = #{isbn}
+    	</update>
+    	
+    	<update id = "setBookInfo" parameterType = "java.util.Map">
+    		Update book Set isbn = #{isbn}, title = #{title}, author = #{author}, publisher = #{publisher}, price = #{price}, count = #{count} 
+    		<if test = "subTitle != null">
+    		,subTitle = #{subTitle}
+    		</if>
+    		<if test = "trans != null">
+    		,trans = #{trans} 
+    		</if>
+    		Where isbn = #{exIsbn}
+    	</update>
+    	
+    	<!-- delete -->
+    	<delete id = "hostDeleteStock" parameterType = "java.util.Map">
+    		delete from  book Where isbn = #{isbn}
+    	</delete>
+    	
+    	
+    	
+    	<!-- GuestMapper -->
+    	<!-- select -->  
+    	<select id = "idCheck" parameterType = "java.util.Map" resultType = "int">
+    		select count(*) from guest where guestid = #{id}
+    	</select>
+    	
+    	<select id = "pwCheck" parameterType = "java.util.Map" resultType = "int">
+    		select count(*) from guest where guestpw = #{pw}
+    	</select>
+    	
+    	<select id = "checkIdPw" parameterType = "java.util.Map" resultType = "int">
+    		select count(*) from guest where guestid = #{id} And guestpw = #{pw}
+    	</select>
+    	
+    	<select id = "getMember" parameterType = "java.util.Map" resultType = "spring.mvc.bms.domain.GuestDTO">
+    		 select * from guest where guestid = #{id}
+    	</select> 
+    
+        <!-- insert -->
+        <insert id = "joinUs" parameterType = "java.util.Map">
+			insert into guest values(g_seq.nextval, #{id},#{pw},#{gName},#{gBirth},#{gAddr},#{gEmail})
+    	</insert>
+    	
+    	<!-- update -->
+    	<update id = "setMember" parameterType = "java.util.Map">
+			Update guest Set guestpw = #{pw}, guestaddr = #{addr}, guestemail = #{email} Where guestid = #{id}
+    	</update>
+    	
+    	<!-- delete -->
+    	<delete id = "infoExit" parameterType = "java.util.Map">
+    		delete guest where guestid = #{id}
+    	</delete>
+    	
+    	<!-- SalesIfotMapper -->
+    	<!-- select -->
+    	<select id = "getClosing" parameterType = "java.util.Map" resultType="spring.mvc.bms.domain.SalesInfoDTO">
+    		select b.price as price, sum(s.salesstock) as salesstock from salesinfo s join book b on s.isbn = b.isbn where s.state = 1 group by b.price
+    	</select>
+		
+    	<select id = "getSalesInfo" parameterType = "java.util.Map" resultType="spring.mvc.bms.domain.SalesInfoDTO">
+    		<if test = "id == null">
+    		Select s.salesnum as salesnum, s.guestid as guestid, s.salesday as salesday, s.isbn as isbn, b.price as price, s.salesstock as salesstock, s.state as state, b.title as title From salesinfo s join book b on s.isbn = b.isbn order by salesNum desc
+    		</if>
+    		
+    		<if test = "id != null">
+    		Select s.salesnum as salesnum, s.guestid as guestid, s.salesday as salesday, s.isbn as isbn, b.price as price, s.salesstock as salesstock, s.state as state, b.title as title From salesinfo s join book b on s.isbn = b.isbn Where guestid = #{id} order by salesNum desc
+    		</if>
+    	</select>
+    	
+    	<select id = "getSearch" parameterType = "java.util.Map" resultType="spring.mvc.bms.domain.SalesInfoDTO">
+    		<if test = "id != null">
+    			Select s.salesnum as salesnum, s.isbn as isbn, b.title as title, b.price as price, s.salesday as salesday, s.state as state, s.salesstock as salesstock, s.guestid as guestid From salesinfo s join book b on s.isbn = b.isbn Where guestid = #{id} AND ${name} = #{value} order by s.salesNum desc
+    		</if> 
+				<if test = "id == null">
+				Select s.salesnum as salesnum, s.isbn as isbn, b.title as title, b.price as price, s.salesday as salesday, s.state as state, s.salesstock as salesstock, s.guestid as guestid  From salesinfo s join book b on s.isbn = b.isbn Where ${name} = #{value} order by s.salesNum desc			
+			</if>   
+		</select>
+		
+		<select id = "getSearchCount" parameterType = "java.util.Map" resultType="int">
+			Select count(${name})  From salesinfo s join book b on s.isbn = b.isbn Where ${name} = #{value} order by s.salesNum desc			
+    	</select>
+    	
+    	<select id = "getSalesSelectInfo" parameterType = "java.util.Map" resultType="spring.mvc.bms.domain.SalesInfoDTO">
+			Select salesnum, isbn, title, price, salesday, state, salesstock, guestid 
+			From(Select s.salesnum as salesnum, s.isbn as isbn, b.title as title, b.price as price, s.salesday as salesday, s.state as state, s.salesstock as salesstock, s.guestid as guestid, rownum as rnum 
+				 From salesinfo s join book b 
+				 on s.isbn = b.isbn
+				 Where ${name} = #{value} And state = 1
+				 <if test = "startDate != null">
+    				And salesday between #{startDate} And #{endDate}
+    			</if>
+    			<if test = "stDate != null">
+    				And salesday between #{stDate} And #{edDate}
+    			</if>
+			order by s.salesNum desc
+			)
+			Where rNum <![CDATA[>=]]> #{start} And rNum <![CDATA[<=]]> #{end}		
+    	</select>
+    	
+    	<select id = "getSalesSelectInfo2" parameterType = "java.util.Map" resultType="spring.mvc.bms.domain.SalesInfoDTO">
+			Select salesnum, isbn, title, price, salesday, state, salesstock, guestid 
+			From(Select s.salesnum as salesnum, s.isbn as isbn, b.title as title, b.price as price, s.salesday as salesday, s.state as state, s.salesstock as salesstock, s.guestid as guestid, rownum as rnum 
+				 From salesinfo s join book b 
+				 on s.isbn = b.isbn
+				 Where ${name} = #{value}
+				order by s.salesNum desc
+			)
+			Where rNum <![CDATA[>=]]> #{start} And rNum <![CDATA[<=]]> #{end}		
+    	</select>
+    	
+    	<select id = "getSearchTAI" parameterType = "java.util.Map" resultType="spring.mvc.bms.domain.SalesInfoDTO">
+    		<if test = "id != null">
+    			SELECT distinct b.title as title ,s.isbn as isbn from salesinfo s join book b on s.isbn = b.isbn where guestid =  #{id}
+    		</if> 
+				<if test = "id == null">
+				SELECT distinct b.title as title ,s.isbn as isbn from salesinfo s join book b on s.isbn = b.isbn			
+			</if>  
+    	</select>
+    	
+    	<select id = "getSearchState" parameterType = "java.util.Map" resultType="spring.mvc.bms.domain.SalesInfoDTO">
+    		<if test = "id != null">
+    			SELECT DISTINCT state from salesinfo where guestid = #{id}
+    		</if> 
+				<if test = "id == null">
+				SELECT DISTINCT state from salesinfo			
+			</if>
+    	</select>
+    	
+    	<select id = "getSalesInfoCount" parameterType = "java.util.Map" resultType="int">
+    		Select count(*) from salesinfo 
+    	</select>
+    	
+    	<select id = "getSalesInfoCountState1" parameterType = "java.util.Map" resultType="int">
+    		Select count(*) from salesinfo Where state = 1
+    		<if test = "startDate != null">
+    			And salesday between #{startDate} And #{endDate}
+    		</if>
+    		<if test = "stDate != null">
+    		And salesday between #{stDate} And #{edDate}
+    		</if>
+    	</select>
+    	
+    	<select id = "getSalesSelectCount" parameterType = "java.util.Map" resultType="int">
+    		Select count(*) From salesinfo s join book b on s.isbn = b.isbn Where ${name} = #{value}
+    	</select>
+    	
+    	<select id = "getSalesSelectCountState1" parameterType = "java.util.Map" resultType="int">
+    		Select count(*) From salesinfo s join book b on s.isbn = b.isbn Where ${name} = #{value} And state = 1
+    		<if test = "startDate != null">
+    			And salesday between #{startDate} And #{endDate}
+    		</if>
+    		<if test = "stDate != null">
+    		And salesday between #{stDate} And #{edDate}
+    		</if>
+    	</select>
+    	
+    	<select id = "getHostSalesInfo" parameterType = "java.util.Map" resultType="spring.mvc.bms.domain.SalesInfoDTO">
+    			
+    		Select *  From (Select salesnum, guestid, salesday, isbn, title, price, salesstock,state, ROWNUM as rNum From (Select * From salesInfo join book using(isbn)  Where state = 1 
+    		<if test = "startDate != null">
+    			And salesday between #{startDate} And #{endDate}
+    		</if>
+    		<if test = "stDate != null">
+    		And salesday between #{stDate} And #{edDate}
+    		</if>
+    		Order By salesday DESC ) ) Where rNum <![CDATA[>=]]> #{start} And rNum <![CDATA[<=]]> #{end} 
+				
+    	</select>
+    	
+    	<select id = "getHostSalesInfo2" parameterType = "java.util.Map" resultType="spring.mvc.bms.domain.SalesInfoDTO">
+    		Select *  From (Select salesnum, guestid, salesday, isbn, title, price, salesstock,state, ROWNUM as rNum From (Select * From salesInfo join book using(isbn)))
+    	</select>
+    	
+    	<select id = "getSearchGuestId" parameterType = "java.util.Map" resultType="spring.mvc.bms.domain.SalesInfoDTO">
+				SELECT DISTINCT guestid from salesinfo			
+    	</select>
+		
+    	<!-- insert -->
+    	<insert id = "buyBook" parameterType = "java.util.Map">
+    		Insert Into salesinfo(salesnum, guestid, isbn, salesstock,state) Values(sales_seq.nextval, #{id}, #{isbn}, #{count}, 0)
+    	</insert>
+    	<!-- update -->
+    	<update id = "changeState" parameterType = "java.util.Map">
+    		Update salesinfo Set state = #{state} Where salesnum = #{salesNum}
+    	</update>
+    	<!-- delete -->  
+    
+    	<!-- BoardMapper -->
+    	<!-- select -->
+    	<select id = "getBoardCount" parameterType = "java.util.Map" resultType="int">
+    		Select count(*) From board
+    	</select>
+    	
+    	<select id = "getBoard" parameterType = "java.util.Map" resultType="spring.mvc.bms.domain.BoardDTO">
+    			<![CDATA[
+    		Select * From (Select num, writer, passwd, subject, content, readCnt, ref, ref_step, ref_level, reg_date, ROWNUM as rNum
+    					   From (Select * 
+						   From board 
+						   Order By ref Desc, ref_step Asc 
+						  		)
+						   )
+					  Where rNum >= #{start} And rNum <= #{end}
+				]]> 
+    	</select>
+    	
+    	<select id = "getBoardContent" parameterType = "java.util.Map" resultType="spring.mvc.bms.domain.BoardDTO">
+    		Select * From board Where num = #{num}
+    	</select>
+    	
+    	<select id = "getBoardIdPw" parameterType = "java.util.Map" resultType="int">
+    		select count(*) from board where writer = #{writer} And passwd = #{pw} and num = #{num}
+    	</select>
+    	
+    	<select id = "boardMaxNum" parameterType = "java.util.Map" resultType="int">
+    		Select Max(num) From board
+    	</select>
+    	
+    	<select id = "getSearchBoardCount" parameterType = "java.util.Map" resultType="int">
+    		Select count(*) From board Where subject like '%'||#{search}||'%'
+    	</select>
+    	
+    	<select id = "getSearchBoard" parameterType = "java.util.Map" resultType="spring.mvc.bms.domain.BoardDTO">
+    			<![CDATA[
+    		Select * From (Select num, writer, passwd, subject, content, readCnt, ref, ref_step, ref_level, reg_date, ROWNUM as rNum
+    					   From (Select * 
+						   From ( Select num, writer, passwd, subject, content, readCnt, ref, ref_step, ref_level, reg_date
+						   		  From board
+						   		  Where subject like '%'||#{search}||'%'
+						   		 )
+						   Order By ref Desc, ref_step Asc 
+						  		)
+						   )
+					  Where rNum >= #{start} And rNum <= #{end}
+				]]> 
+    	</select>
+
+    	<!-- insert -->
+    	<insert id = "boardNewWrite" parameterType = "java.util.Map">
+    		Insert Into board(num, writer, passwd, subject, content, ref, ref_level, ref_step) values(board_seq.nextval, #{writer},#{passwd},#{subject},#{content},#{ref},#{ref_level},#{ref_step})
+    	</insert>
+    	
+    	<!-- update -->
+    	<update id = "readCnt" parameterType = "java.util.Map">
+    		Update board Set readCnt = (readCnt + 1) Where num = #{num}
+    	</update>
+    	
+    	<update id = "setBoardContent" parameterType = "java.util.Map">
+    		Update board Set subject = #{subject}, content = #{content}, passwd = #{pw} Where num = #{num}
+    	</update>
+    	
+    	<update id = "hostDelete" parameterType = "java.util.Map">
+    		Update board Set subject = '관리자 삭제', content = '관리자에 의해 삭제된 글입니다.', passwd = 'host' Where num = #{num}
+    	</update>
+    	
+    	<update id = "boardUpdateRef" parameterType = "java.util.Map">
+    		Update board Set ref_step = ref_step + 1 Where ref = #{ref} And ref_step > #{ref_step}
+    	</update>
+    	
+    	<!-- delete -->  
+    	<delete id = "deleteBoard" parameterType = "java.util.Map">
+    		delete from board where num = #{num}
+    	</delete>
+    </mapper>
